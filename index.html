@@ -1,0 +1,815 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Matt Richard — Creative Technologist</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ─── Design tokens ──────────────────────────────────────────────────── */
+:root {
+  /* ── Site palette ─────────────────────────────────────── */
+  --bg:        #F5F4F0;   /* warm off-white — primary surface */
+  --fg:        #1a1a18;   /* near-black */
+  --dim:       rgba(26,26,24, 0.40);
+  --rule:      rgba(26,26,24, 0.11);
+  --tag-bg:    rgba(245,244,240, 0.70);
+  --tag-border:rgba(26,26,24, 0.20);
+
+  /* ── Reaction-diffusion animation colors ──────────────────
+     Default: inherit from site palette above.
+     Override ONLY these two to retheme the animation
+     independently without touching the rest of the site.
+     e.g. dark-mode hero: --rd-bg: #1a1a18; --rd-fg: #F5F4F0;
+  ──────────────────────────────────────────────────────── */
+  --rd-bg: var(--bg);   /* light cells  → warm off-white */
+  --rd-fg: var(--fg);   /* dark cells   → near-black     */
+}
+
+/* ─── Reset ──────────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body {
+  background: var(--bg);
+  color: var(--fg);
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+/* ─── Typography base ────────────────────────────────────────────────── */
+body {
+  font-family: 'DM Sans', system-ui, sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* ─── Nav ────────────────────────────────────────────────────────────── */
+nav {
+  position: relative;
+  z-index: 20;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.25rem 2.5rem;
+  border-bottom: 1px solid var(--rule);
+  background: var(--bg);
+}
+.nav-name {
+  font-family: 'Instrument Serif', Georgia, serif;
+  font-size: 14px;
+  letter-spacing: 0.01em;
+  color: var(--fg);
+  font-weight: 400;
+}
+.nav-links {
+  display: flex;
+  gap: 2.25rem;
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.nav-links a {
+  text-decoration: none;
+  color: var(--dim);
+  transition: color 0.15s;
+}
+.nav-links a:hover { color: var(--fg); }
+
+/* ─── Hero ───────────────────────────────────────────────────────────── */
+.hero {
+  position: relative;
+  width: 100%;
+  height: 480px;
+  overflow: hidden;
+  background: var(--bg);
+  cursor: crosshair;
+  border-bottom: 1px solid var(--rule);
+}
+
+/* Canvas fills hero absolutely — sized by JS */
+.hero canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: block;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+/* Gradient: opaque left (text legible) → transparent right (animation shows) */
+.hero-gradient {
+  position: absolute;
+  top: 0; left: 0;
+  width: 64%;
+  height: 100%;
+  background: linear-gradient(
+    to right,
+    rgba(245,244,240,0.97) 0%,
+    rgba(245,244,240,0.92) 30%,
+    rgba(245,244,240,0.60) 60%,
+    rgba(245,244,240,0.00) 100%
+  );
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* Text block sits over gradient */
+.hero-text {
+  position: absolute;
+  top: 50%;
+  left: 2.5rem;
+  transform: translateY(-50%);
+  z-index: 3;
+  pointer-events: none;
+}
+.hero-kicker {
+  display: block;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--dim);
+  margin-bottom: 0.7rem;
+}
+.hero-name {
+  font-family: 'Instrument Serif', Georgia, serif;
+  font-style: italic;
+  font-size: clamp(3rem, 5.5vw, 4.75rem);
+  line-height: 0.93;
+  letter-spacing: -0.02em;
+  color: var(--fg);
+  font-weight: 400;
+  margin-bottom: 1.4rem;
+}
+.hero-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  max-width: 400px;
+}
+.tag {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #444440;
+  background: var(--tag-bg);
+  border: 0.5px solid var(--tag-border);
+  padding: 4px 10px;
+  backdrop-filter: blur(2px);
+}
+
+/* Interaction hint */
+.hint {
+  position: absolute;
+  bottom: 1.1rem;
+  right: 1.5rem;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(26,26,24,0.25);
+  z-index: 5;
+  pointer-events: none;
+}
+
+/* ─── Section bar ────────────────────────────────────────────────────── */
+.section-bar {
+  border-bottom: 1px solid var(--rule);
+  padding: 1.2rem 2.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.section-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+
+/* ─── Project grid ───────────────────────────────────────────────────── */
+.project-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1px;
+  background: var(--rule);
+  margin: 0 2.5rem 2.5rem;
+  border: 1px solid var(--rule);
+  border-top: none;
+}
+.p-card {
+  background: var(--bg);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.p-card:hover { background: #eeecea; }
+.p-thumb {
+  width: 100%;
+  aspect-ratio: 4/3;
+  background: #e0dfd7;
+  overflow: hidden;
+}
+.p-meta {
+  padding: 0.65rem 0.8rem 0.9rem;
+  border-top: 1px solid var(--rule);
+}
+.p-title {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--fg);
+  letter-spacing: 0.01em;
+  font-family: 'DM Sans', sans-serif;
+}
+.p-sub {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9.5px;
+  color: var(--dim);
+  margin-top: 3px;
+  letter-spacing: 0.04em;
+}
+
+/* ─── WebGL error state ──────────────────────────────────────────────── */
+.webgl-err {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--dim);
+  letter-spacing: 0.08em;
+  z-index: 2;
+}
+</style>
+</head>
+<body>
+
+<!-- ══ Nav ══════════════════════════════════════════════════════════════ -->
+<nav>
+  <span class="nav-name">Matt Richard</span>
+  <div class="nav-links">
+    <a href="#">Work</a>
+    <a href="#">Skills</a>
+    <a href="#">About</a>
+    <a href="#">Contact</a>
+  </div>
+</nav>
+
+<!-- ══ Hero ═════════════════════════════════════════════════════════════ -->
+<div class="hero" id="hero">
+  <canvas id="rd-canvas"></canvas>
+  <div class="hero-gradient"></div>
+  <div class="hero-text">
+    <span class="hero-kicker">Creative Technologist · New York Area</span>
+    <h1 class="hero-name">Matt<br>Richard</h1>
+    <div class="hero-tags">
+      <span class="tag">Interactive &amp; Experiential</span>
+      <span class="tag">LED &amp; Pixel Systems</span>
+      <span class="tag">Digital Fabrication</span>
+      <span class="tag">AI Workflows</span>
+      <span class="tag">Hardware QA</span>
+      <span class="tag">Product Development</span>
+    </div>
+  </div>
+  <div class="hint">Click or drag to seed reaction</div>
+</div>
+
+<!-- ══ Work index ═══════════════════════════════════════════════════════ -->
+<div class="section-bar">
+  <span class="section-label">Selected Work</span>
+  <span class="section-label">16 Projects · 2012 – Present</span>
+</div>
+
+<div class="project-grid">
+  <div class="p-card">
+    <div class="p-thumb"></div>
+    <div class="p-meta">
+      <div class="p-title">Disney Starlight — Peter Pan Float</div>
+      <div class="p-sub">2024 · LED Mapping</div>
+    </div>
+  </div>
+  <div class="p-card">
+    <div class="p-thumb"></div>
+    <div class="p-meta">
+      <div class="p-title">Amazon HQ2 Visitor Landing</div>
+      <div class="p-sub">2022 · TouchDesigner / DMX / LED</div>
+    </div>
+  </div>
+  <div class="p-card">
+    <div class="p-thumb"></div>
+    <div class="p-meta">
+      <div class="p-title">Saratoga Battlefield Maps</div>
+      <div class="p-sub">2023 · CNC / Bronze Cast</div>
+    </div>
+  </div>
+  <div class="p-card">
+    <div class="p-thumb"></div>
+    <div class="p-meta">
+      <div class="p-title">Rip Current</div>
+      <div class="p-sub">2021 · LED Sculpture</div>
+    </div>
+  </div>
+  <div class="p-card">
+    <div class="p-thumb"></div>
+    <div class="p-meta">
+      <div class="p-title">Reading Emotion</div>
+      <div class="p-sub">2019 · Interactive Install</div>
+    </div>
+  </div>
+  <div class="p-card">
+    <div class="p-thumb"></div>
+    <div class="p-meta">
+      <div class="p-title">A Window Into The Near Future</div>
+      <div class="p-sub">2012 · Interactive OOH · 14 Awards</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ WebGL reaction-diffusion ══════════════════════════════════════════
+     Ported from p5.js Gray-Scott sketch → WebGL2 / GLSL ES 300
+     Parameters match original mockup exactly (FEED, KILL, STEPS, etc.)
+     ═══════════════════════════════════════════════════════════════════ -->
+<script>
+'use strict';
+
+// ── Parameters (mirrored from original p5 mockup) ─────────────────────
+const CELL            = 8;
+const STEPS           = 2;
+const FEED            = 0.0545;
+const KILL            = 0.062;
+const DU              = 0.2097;
+const DV              = 0.105;
+const NOISE_SCALE     = 0.018;
+const NOISE_SPEED     = 0.001;
+const NOISE_RADIUS    = 0.55;
+const NOISE_THRESHOLD = 0.50;
+const NOISE_STRENGTH  = 0.016;
+const NOISE_U_DAMP    = 0.004;
+const DRIFT_SPEED     = 0.0006;
+const WAVE_SPEED      = 0.004;
+const SCROLL_SPEED    = 0.09;
+// Colors are read from CSS variables at boot — see cssVarToRGB() below
+// and the --rd-bg / --rd-fg custom properties in :root
+const LEFT_BUFFER     = 3;
+const RIGHT_BUFFER    = 2;
+const TOP_BUFFER      = 2;
+const BOTTOM_BUFFER   = 2;
+const SEED_RADIUS_CLICK = 10;
+const SEED_RADIUS_DRAG  = 6;
+const DRAG_INTERVAL_MS  = 30;
+const INITIAL_SEEDS     = 6;
+
+// ── WebGL init ────────────────────────────────────────────────────────
+const heroEl = document.getElementById('hero');
+const canvas = document.getElementById('rd-canvas');
+const gl = canvas.getContext('webgl2', {
+  antialias: false, preserveDrawingBuffer: false,
+  premultipliedAlpha: false, alpha: false
+});
+
+if (!gl) {
+  heroEl.innerHTML += '<div class="webgl-err">WebGL2 unavailable — try a recent browser</div>';
+  throw new Error('WebGL2 unavailable');
+}
+const extCBF = gl.getExtension('EXT_color_buffer_float');
+if (!extCBF) {
+  heroEl.innerHTML += '<div class="webgl-err">EXT_color_buffer_float unavailable</div>';
+  throw new Error('EXT_color_buffer_float unavailable');
+}
+
+// ── Shaders ───────────────────────────────────────────────────────────
+const VERT_QUAD = `#version 300 es
+in vec2 aPos;
+out vec2 vUV;
+void main() {
+  vUV = aPos * 0.5 + 0.5;
+  gl_Position = vec4(aPos, 0.0, 1.0);
+}`;
+
+// Stefan Gustavson / Ian McEwan — 4D simplex noise (Ashima Arts, MIT)
+const SIMPLEX4D = `
+vec4 mod289(vec4 x){return x-floor(x*(1.0/289.0))*289.0;}
+float mod289(float x){return x-floor(x*(1.0/289.0))*289.0;}
+vec4 permute(vec4 x){return mod289(((x*34.0)+10.0)*x);}
+float permute(float x){return mod289(((x*34.0)+10.0)*x);}
+vec4 taylorInvSqrt(vec4 r){return 1.79284291400159-0.85373472095314*r;}
+float taylorInvSqrt(float r){return 1.79284291400159-0.85373472095314*r;}
+vec4 grad4(float j,vec4 ip){
+  const vec4 ones=vec4(1.0,1.0,1.0,-1.0);
+  vec4 p,s;
+  p.xyz=floor(fract(vec3(j)*ip.xyz)*7.0)*ip.z-1.0;
+  p.w=1.5-dot(abs(p.xyz),ones.xyz);
+  s=vec4(lessThan(p,vec4(0.0)));
+  p.xyz=p.xyz+(s.xyz*2.0-1.0)*s.www;
+  return p;
+}
+#define F4 0.309016994374947451
+float snoise(vec4 v){
+  const vec4 C=vec4(0.138196601125011,0.276393202250021,0.414589803375032,-0.447213595499958);
+  vec4 i=floor(v+dot(v,vec4(F4)));
+  vec4 x0=v-i+dot(i,C.xxxx);
+  vec4 i0;
+  vec3 isX=step(x0.yzw,x0.xxx);
+  vec3 isYZ=step(x0.zww,x0.yyz);
+  i0.x=isX.x+isX.y+isX.z;
+  i0.yzw=1.0-isX;
+  i0.y+=isYZ.x+isYZ.y;
+  i0.zw+=1.0-isYZ.xy;
+  i0.z+=isYZ.z;
+  i0.w+=1.0-isYZ.z;
+  vec4 i3=clamp(i0,0.0,1.0);
+  vec4 i2=clamp(i0-1.0,0.0,1.0);
+  vec4 i1=clamp(i0-2.0,0.0,1.0);
+  vec4 x1=x0-i1+C.xxxx;
+  vec4 x2=x0-i2+C.yyyy;
+  vec4 x3=x0-i3+C.zzzz;
+  vec4 x4=x0+C.wwww;
+  i=mod289(i);
+  float j0=permute(permute(permute(permute(i.w)+i.z)+i.y)+i.x);
+  vec4 j1=permute(permute(permute(permute(i.w+vec4(i1.w,i2.w,i3.w,1.0))+i.z+vec4(i1.z,i2.z,i3.z,1.0))+i.y+vec4(i1.y,i2.y,i3.y,1.0))+i.x+vec4(i1.x,i2.x,i3.x,1.0));
+  vec4 ip=vec4(1.0/294.0,1.0/49.0,1.0/7.0,0.0);
+  vec4 p0=grad4(j0,ip);
+  vec4 p1=grad4(j1.x,ip);
+  vec4 p2=grad4(j1.y,ip);
+  vec4 p3=grad4(j1.z,ip);
+  vec4 p4=grad4(j1.w,ip);
+  vec4 norm=taylorInvSqrt(vec4(dot(p0,p0),dot(p1,p1),dot(p2,p2),dot(p3,p3)));
+  p0*=norm.x;p1*=norm.y;p2*=norm.z;p3*=norm.w;
+  p4*=taylorInvSqrt(dot(p4,p4));
+  vec3 m0=max(0.6-vec3(dot(x0,x0),dot(x1,x1),dot(x2,x2)),0.0);
+  vec2 m1=max(0.6-vec2(dot(x3,x3),dot(x4,x4)),0.0);
+  m0=m0*m0; m1=m1*m1;
+  return 49.0*(dot(m0*m0,vec3(dot(p0,x0),dot(p1,x1),dot(p2,x2)))+dot(m1*m1,vec2(dot(p3,x3),dot(p4,x4))));
+}
+`;
+
+const FRAG_SEED = `#version 300 es
+precision highp float;
+in vec2 vUV;
+out vec4 outColor;
+uniform vec2  uSeedUV;
+uniform float uRadius;
+uniform vec2  uGrid;
+uniform vec3  uRand;
+float hash(vec2 p,float s){return fract(sin(dot(p,vec2(12.9898,78.233))+s)*43758.5453);}
+void main(){
+  vec2 d=(vUV-uSeedUV)*uGrid;
+  if(dot(d,d)>uRadius*uRadius)discard;
+  float jU=(hash(vUV*137.0,uRand.x)-0.5)*0.15;
+  float jV=(hash(vUV*211.0,uRand.y)-0.5)*0.08;
+  outColor=vec4(0.5+jU,0.25+jV,0.0,1.0);
+}`;
+
+const FRAG_NOISE = `#version 300 es
+precision highp float;
+in vec2 vUV;
+out vec4 outColor;
+uniform sampler2D uState;
+uniform vec2  uGrid;
+uniform float uNoiseScale;
+uniform float uDriftWaveX;
+uniform vec2  uNoiseTime;
+uniform float uThreshold;
+uniform float uStrength;
+uniform float uUDamp;
+${SIMPLEX4D}
+void main(){
+  vec2 state=texture(uState,vUV).rg;
+  vec2 cellPos=vUV*uGrid;
+  float nx=cellPos.x*uNoiseScale-uDriftWaveX;
+  float ny=cellPos.y*uNoiseScale;
+  float n=(snoise(vec4(nx,ny,uNoiseTime.x,uNoiseTime.y))+1.0)*0.5;
+  if(n>uThreshold){
+    float strength=((n-uThreshold)/(1.0-uThreshold))*uStrength;
+    state.g+=strength;
+    state.r-=uUDamp;
+  }
+  outColor=vec4(clamp(state,0.0,1.0),0.0,1.0);
+}`;
+
+const FRAG_RD = `#version 300 es
+precision highp float;
+in vec2 vUV;
+out vec4 outColor;
+uniform sampler2D uState;
+uniform vec2  uTexel;
+uniform float uDu,uDv,uFeed,uKill;
+void main(){
+  vec2 c=texture(uState,vUV).rg;
+  vec2 n=texture(uState,vUV+vec2(0.0,uTexel.y)).rg;
+  vec2 s=texture(uState,vUV-vec2(0.0,uTexel.y)).rg;
+  vec2 e=texture(uState,vUV+vec2(uTexel.x,0.0)).rg;
+  vec2 w=texture(uState,vUV-vec2(uTexel.x,0.0)).rg;
+  vec2 lap=(n+s+e+w)-4.0*c;
+  float u=c.r,v=c.g,uvv=u*v*v;
+  outColor=vec4(clamp(u+(uDu*lap.r-uvv+uFeed*(1.0-u)),0.0,1.0),
+               clamp(v+(uDv*lap.g+uvv-(uFeed+uKill)*v),0.0,1.0),0.0,1.0);
+}`;
+
+const FRAG_DISPLAY = `#version 300 es
+precision highp float;
+in vec2 vUV;
+out vec4 outColor;
+uniform sampler2D uState;
+uniform vec2  uResolution,uGrid;
+uniform float uCellPx,uScrollOff,uPixelOffset,uLeftBuffer,uBottomBuffer,uDpr;
+uniform vec3  uBgColor;   /* light cells — full RGB, warm white */
+uniform vec3  uFgColor;   /* dark cells  — full RGB, near-black */
+const float bayer8[64]=float[64](
+   0.0,32.0, 8.0,40.0, 2.0,34.0,10.0,42.0,
+  48.0,16.0,56.0,24.0,50.0,18.0,58.0,26.0,
+  12.0,44.0, 4.0,36.0,14.0,46.0, 6.0,38.0,
+  60.0,28.0,52.0,20.0,62.0,30.0,54.0,22.0,
+   3.0,35.0,11.0,43.0, 1.0,33.0, 9.0,41.0,
+  51.0,19.0,59.0,27.0,49.0,17.0,57.0,25.0,
+  15.0,47.0, 7.0,39.0,13.0,45.0, 5.0,37.0,
+  63.0,31.0,55.0,23.0,61.0,29.0,53.0,21.0
+);
+void main(){
+  vec2 px=vUV*uResolution;
+  float sampX=px.x-floor(uPixelOffset)+uGrid.x*uCellPx;
+  float gx=mod(floor(sampX/uCellPx),uGrid.x);
+  float bufCol=mod(gx+uScrollOff+uLeftBuffer,uGrid.x);
+  float gy=min(floor(px.y/uCellPx)+uBottomBuffer,uGrid.y-1.0);
+  vec2 stateUV=(vec2(bufCol,gy)+0.5)/uGrid;
+  float u=texture(uState,stateUV).r;
+  int bx=int(mod(floor(px.x/uDpr),8.0));
+  int by=int(mod(floor(px.y/uDpr),8.0));
+  float threshold=bayer8[by*8+bx]/64.0;
+  outColor=vec4((u>threshold)?uBgColor:uFgColor,1.0);
+}`;
+
+// ── Compile helpers ───────────────────────────────────────────────────
+function compile(type,src){
+  const sh=gl.createShader(type);
+  gl.shaderSource(sh,src); gl.compileShader(sh);
+  if(!gl.getShaderParameter(sh,gl.COMPILE_STATUS))
+    throw new Error('Shader: '+gl.getShaderInfoLog(sh));
+  return sh;
+}
+function link(vs,fs){
+  const p=gl.createProgram();
+  gl.attachShader(p,compile(gl.VERTEX_SHADER,vs));
+  gl.attachShader(p,compile(gl.FRAGMENT_SHADER,fs));
+  gl.bindAttribLocation(p,0,'aPos');
+  gl.linkProgram(p);
+  if(!gl.getProgramParameter(p,gl.LINK_STATUS))
+    throw new Error('Link: '+gl.getProgramInfoLog(p));
+  return p;
+}
+
+const progSeed    = link(VERT_QUAD, FRAG_SEED);
+const progNoise   = link(VERT_QUAD, FRAG_NOISE);
+const progRD      = link(VERT_QUAD, FRAG_RD);
+const progDisplay = link(VERT_QUAD, FRAG_DISPLAY);
+
+function uloc(p,names){
+  const o={};
+  for(const n of names) o[n]=gl.getUniformLocation(p,n);
+  return o;
+}
+const uSeed    = uloc(progSeed,   ['uSeedUV','uRadius','uGrid','uRand']);
+const uNoise   = uloc(progNoise,  ['uState','uGrid','uNoiseScale','uDriftWaveX','uNoiseTime','uThreshold','uStrength','uUDamp']);
+const uRD      = uloc(progRD,     ['uState','uTexel','uDu','uDv','uFeed','uKill']);
+const uDisplay = uloc(progDisplay,['uState','uResolution','uGrid','uCellPx','uScrollOff','uPixelOffset','uLeftBuffer','uBottomBuffer','uDpr','uBgColor','uFgColor']);
+
+// ── CSS variable → WebGL color helper ────────────────────────────────
+// Reads a CSS custom property, resolves it through the browser's own color
+// parser (via a temporary element), returns normalized [r, g, b] for WebGL.
+// Correctly resolves chains: --rd-bg: var(--bg) — browser does the work.
+function cssVarToRGB(varName) {
+  const el = document.createElement('div');
+  el.style.display = 'none';
+  el.style.color = 'var(' + varName + ')';
+  document.body.appendChild(el);
+  const computed = getComputedStyle(el).color; // always "rgb(r, g, b)"
+  document.body.removeChild(el);
+  const m = computed.match(/\d+/g);
+  if (!m || m.length < 3) return [1, 1, 1]; // safe fallback: white
+  return [parseInt(m[0])/255, parseInt(m[1])/255, parseInt(m[2])/255];
+}
+
+// Animation colors — resolved once at boot from --rd-bg / --rd-fg.
+// Call readAnimColors() again at runtime to pick up any CSS changes.
+let rdBgColor = [1, 1, 1];
+let rdFgColor = [0, 0, 0];
+function readAnimColors() {
+  rdBgColor = cssVarToRGB('--rd-bg');
+  rdFgColor = cssVarToRGB('--rd-fg');
+}
+
+// Fullscreen quad
+const vao=gl.createVertexArray(); gl.bindVertexArray(vao);
+const vbo=gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER,vbo);
+gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,-1,1,1,-1,1,1]),gl.STATIC_DRAW);
+gl.enableVertexAttribArray(0);
+gl.vertexAttribPointer(0,2,gl.FLOAT,false,0,0);
+
+// ── State ─────────────────────────────────────────────────────────────
+let dpr,cellPx,cols,rows;
+let texA,texB,fboA,fboB;
+let readIdx=0;
+let scrollOff=0, pixelOffset=0;
+let driftX=0, waveX=0, noiseT=0;
+const pendingSeeds=[], pendingFresh=[];
+
+function readTex()  {return readIdx===0?texA:texB;}
+function readFBO()  {return readIdx===0?fboA:fboB;}
+function writeFBO() {return readIdx===0?fboB:fboA;}
+function swap()     {readIdx=1-readIdx;}
+
+function makeStateTex(w,h){
+  const tex=gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_2D,tex);
+  gl.texStorage2D(gl.TEXTURE_2D,1,gl.RG32F,w,h);
+  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.NEAREST);
+  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.NEAREST);
+  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.REPEAT);
+  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.REPEAT);
+  const fbo=gl.createFramebuffer();
+  gl.bindFramebuffer(gl.FRAMEBUFFER,fbo);
+  gl.framebufferTexture2D(gl.FRAMEBUFFER,gl.COLOR_ATTACHMENT0,gl.TEXTURE_2D,tex,0);
+  if(gl.checkFramebufferStatus(gl.FRAMEBUFFER)!==gl.FRAMEBUFFER_COMPLETE)
+    throw new Error('FBO incomplete');
+  return [tex,fbo];
+}
+
+function clearState(){
+  for(const fb of [fboA,fboB]){
+    gl.bindFramebuffer(gl.FRAMEBUFFER,fb);
+    gl.viewport(0,0,cols,rows);
+    gl.clearBufferfv(gl.COLOR,0,[1.0,0.0,0.0,1.0]);
+  }
+}
+
+function sprinkleSeeds(){
+  // Right-biased initial seeds — pattern blooms behind the gradient, not under it
+  const seeds=[[0.60,0.50],[0.72,0.28],[0.85,0.65],[0.65,0.75],[0.90,0.35],[0.78,0.50]];
+  for(const [fx,fy] of seeds){
+    pendingSeeds.push({uvX:fx, uvY:fy, radius:8+Math.random()*6,
+      rand:[Math.random(),Math.random(),Math.random()]});
+  }
+}
+
+function resize(){
+  dpr=Math.max(1,Math.min(2,window.devicePixelRatio||1));
+  const cssW=heroEl.offsetWidth;
+  const cssH=heroEl.offsetHeight;
+  canvas.style.width  = cssW+'px';
+  canvas.style.height = cssH+'px';
+  canvas.width  = Math.round(cssW*dpr);
+  canvas.height = Math.round(cssH*dpr);
+  cellPx=CELL*dpr;
+  cols=Math.floor(canvas.width/cellPx)+LEFT_BUFFER+RIGHT_BUFFER;
+  rows=Math.max(1,Math.floor(canvas.height/cellPx))+TOP_BUFFER+BOTTOM_BUFFER;
+  if(texA){gl.deleteTexture(texA); gl.deleteFramebuffer(fboA);}
+  if(texB){gl.deleteTexture(texB); gl.deleteFramebuffer(fboB);}
+  [texA,fboA]=makeStateTex(cols,rows);
+  [texB,fboB]=makeStateTex(cols,rows);
+  scrollOff=0; pixelOffset=0;
+  pendingSeeds.length=0; pendingFresh.length=0; readIdx=0;
+  clearState();
+  sprinkleSeeds();
+}
+
+// ── Per-frame passes ──────────────────────────────────────────────────
+function passFreshFill(col){
+  gl.bindFramebuffer(gl.FRAMEBUFFER,readFBO());
+  gl.viewport(0,0,cols,rows);
+  gl.enable(gl.SCISSOR_TEST);
+  gl.scissor(col,0,1,rows);
+  gl.clearBufferfv(gl.COLOR,0,[1.0,0.0,0.0,1.0]);
+  gl.disable(gl.SCISSOR_TEST);
+}
+function passSeed(seed){
+  gl.useProgram(progSeed);
+  gl.bindFramebuffer(gl.FRAMEBUFFER,readFBO());
+  gl.viewport(0,0,cols,rows);
+  gl.uniform2f(uSeed.uSeedUV,seed.uvX,seed.uvY);
+  gl.uniform1f(uSeed.uRadius,seed.radius);
+  gl.uniform2f(uSeed.uGrid,cols,rows);
+  gl.uniform3f(uSeed.uRand,seed.rand[0],seed.rand[1],seed.rand[2]);
+  gl.drawArrays(gl.TRIANGLES,0,6);
+}
+function passNoise(){
+  gl.useProgram(progNoise);
+  gl.bindFramebuffer(gl.FRAMEBUFFER,writeFBO());
+  gl.viewport(0,0,cols,rows);
+  gl.activeTexture(gl.TEXTURE0);
+  gl.bindTexture(gl.TEXTURE_2D,readTex());
+  gl.uniform1i(uNoise.uState,0);
+  gl.uniform2f(uNoise.uGrid,cols,rows);
+  gl.uniform1f(uNoise.uNoiseScale,NOISE_SCALE);
+  gl.uniform1f(uNoise.uDriftWaveX,driftX+waveX);
+  gl.uniform2f(uNoise.uNoiseTime,Math.cos(noiseT)*NOISE_RADIUS,Math.sin(noiseT)*NOISE_RADIUS);
+  gl.uniform1f(uNoise.uThreshold,NOISE_THRESHOLD);
+  gl.uniform1f(uNoise.uStrength,NOISE_STRENGTH);
+  gl.uniform1f(uNoise.uUDamp,NOISE_U_DAMP);
+  gl.drawArrays(gl.TRIANGLES,0,6);
+  swap();
+}
+function passRD(){
+  gl.useProgram(progRD);
+  gl.uniform2f(uRD.uTexel,1.0/cols,1.0/rows);
+  gl.uniform1f(uRD.uDu,DU); gl.uniform1f(uRD.uDv,DV);
+  gl.uniform1f(uRD.uFeed,FEED); gl.uniform1f(uRD.uKill,KILL);
+  for(let i=0;i<STEPS;i++){
+    gl.bindFramebuffer(gl.FRAMEBUFFER,writeFBO());
+    gl.viewport(0,0,cols,rows);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D,readTex());
+    gl.uniform1i(uRD.uState,0);
+    gl.drawArrays(gl.TRIANGLES,0,6);
+    swap();
+  }
+}
+function passDisplay(){
+  gl.useProgram(progDisplay);
+  gl.bindFramebuffer(gl.FRAMEBUFFER,null);
+  gl.viewport(0,0,canvas.width,canvas.height);
+  gl.activeTexture(gl.TEXTURE0);
+  gl.bindTexture(gl.TEXTURE_2D,readTex());
+  gl.uniform1i(uDisplay.uState,0);
+  gl.uniform2f(uDisplay.uResolution,canvas.width,canvas.height);
+  gl.uniform2f(uDisplay.uGrid,cols,rows);
+  gl.uniform1f(uDisplay.uCellPx,cellPx);
+  gl.uniform1f(uDisplay.uScrollOff,scrollOff);
+  gl.uniform1f(uDisplay.uPixelOffset,pixelOffset);
+  gl.uniform1f(uDisplay.uLeftBuffer,LEFT_BUFFER);
+  gl.uniform1f(uDisplay.uBottomBuffer,BOTTOM_BUFFER);
+  gl.uniform1f(uDisplay.uDpr,dpr);
+  gl.uniform3fv(uDisplay.uBgColor, rdBgColor);
+  gl.uniform3fv(uDisplay.uFgColor, rdFgColor);
+  gl.drawArrays(gl.TRIANGLES,0,6);
+}
+
+// ── Frame loop ────────────────────────────────────────────────────────
+let lastTime=0;
+function frame(now){
+  const dt=lastTime?(now-lastTime):16.667;
+  lastTime=now;
+  const adv=Math.min(dt/16.667,3.0);
+  driftX+=DRIFT_SPEED*adv;
+  waveX +=WAVE_SPEED *adv;
+  noiseT+=NOISE_SPEED*adv;
+  pixelOffset+=SCROLL_SPEED*cellPx*adv;
+  while(pixelOffset>=cellPx){
+    pixelOffset-=cellPx;
+    scrollOff=(scrollOff-1+cols)%cols;
+    pendingFresh.push(scrollOff);
+  }
+  while(pendingFresh.length) passFreshFill(pendingFresh.shift());
+  while(pendingSeeds.length) passSeed(pendingSeeds.shift());
+  passNoise();
+  passRD();
+  passDisplay();
+  requestAnimationFrame(frame);
+}
+
+// ── Pointer interaction ───────────────────────────────────────────────
+let isDown=false, lastDragTime=0;
+function pointerUV(e){
+  const rect=canvas.getBoundingClientRect();
+  const px=(e.clientX-rect.left)*dpr;
+  const py=(e.clientY-rect.top)*dpr;
+  const sampX=px-Math.floor(pixelOffset)+cols*cellPx;
+  const bufCol=((sampX/cellPx)+scrollOff+LEFT_BUFFER)%cols;
+  const bufRow=(canvas.height-py)/cellPx+BOTTOM_BUFFER;
+  return {uvX:bufCol/cols, uvY:Math.max(0,Math.min(1,bufRow/rows))};
+}
+canvas.addEventListener('pointerdown',(e)=>{
+  isDown=true; canvas.setPointerCapture(e.pointerId);
+  const uv=pointerUV(e);
+  pendingSeeds.push({...uv,radius:SEED_RADIUS_CLICK,rand:[Math.random(),Math.random(),Math.random()]});
+  lastDragTime=performance.now();
+});
+canvas.addEventListener('pointermove',(e)=>{
+  if(!isDown)return;
+  if(performance.now()-lastDragTime<DRAG_INTERVAL_MS)return;
+  pendingSeeds.push({...pointerUV(e),radius:SEED_RADIUS_DRAG,rand:[Math.random(),Math.random(),Math.random()]});
+  lastDragTime=performance.now();
+});
+canvas.addEventListener('pointerup',   ()=>{isDown=false;});
+canvas.addEventListener('pointercancel',()=>{isDown=false;});
+canvas.addEventListener('pointerleave', ()=>{isDown=false;});
+
+// ── Resize (debounced) ────────────────────────────────────────────────
+let resizeT=0;
+window.addEventListener('resize',()=>{
+  clearTimeout(resizeT);
+  resizeT=setTimeout(resize,120);
+});
+
+// ── Boot ──────────────────────────────────────────────────────────────
+readAnimColors();
+resize();
+requestAnimationFrame(frame);
+</script>
+
+</body>
+</html>
