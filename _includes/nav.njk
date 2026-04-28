@@ -1,0 +1,9 @@
+<nav>
+  <a href="/" class="nav-name">Matt Richard</a>
+  <ul class="nav-links">
+    <li><a href="/#work" {% if navActive == 'work' %}class="active"{% endif %}>Work</a></li>
+    <li><a href="/skills" {% if navActive == 'skills' %}class="active"{% endif %}>Skills</a></li>
+    <li><a href="/about" {% if navActive == 'about' %}class="active"{% endif %}>About</a></li>
+    <li><a href="/contact" {% if navActive == 'contact' %}class="active"{% endif %}>Contact</a></li>
+  </ul>
+</nav>

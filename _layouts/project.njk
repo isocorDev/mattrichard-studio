@@ -1,0 +1,188 @@
+---
+layout: base.njk
+navActive: work
+---
+<link rel="stylesheet" href="/css/project.css">
+
+{# ── HERO ──────────────────────────────────────────────────── #}
+<section class="hero {% if not heroImage %}hero--placeholder{% endif %}">
+  {% if heroImage %}
+  <div class="hero-image" style="background-image: url('{{ heroImage }}'); background-position: {{ heroPosition or 'center center' }};"></div>
+  {% else %}
+  <div class="hero-placeholder-bg"></div>
+  {% endif %}
+  <div class="hero-scrim"></div>
+  <div class="hero-content">
+    <p class="hero-kicker">{{ heroKicker }}</p>
+    <h1 class="hero-title">{{ title }}</h1>
+    {% if tags %}
+    <div class="hero-tags">
+      {% for tag in tags %}
+      <span class="hero-tag">{{ tag }}</span>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </div>
+</section>
+
+{# ── MAIN BODY ─────────────────────────────────────────────── #}
+<main class="project-body">
+
+  {# Metadata bar #}
+  <div class="meta-bar">
+    {% if client %}
+    <div class="meta-cell">
+      <span class="meta-label">Client</span>
+      <span class="meta-value">{{ client }}</span>
+    </div>
+    {% endif %}
+    <div class="meta-cell">
+      <span class="meta-label">Year</span>
+      <span class="meta-value">{{ year }}</span>
+    </div>
+    {% if role %}
+    <div class="meta-cell">
+      <span class="meta-label">Role</span>
+      <span class="meta-value">{{ role }}</span>
+    </div>
+    {% endif %}
+    {% if location %}
+    <div class="meta-cell">
+      <span class="meta-label">Location</span>
+      <span class="meta-value">{{ location }}</span>
+    </div>
+    {% endif %}
+  </div>
+
+  {# Two-column: content left, role note right #}
+  <div class="content-grid">
+
+    <div class="content-main">
+      {# Description + field notes — written in the individual project file #}
+      {{ content | safe }}
+    </div>
+
+    {% if roleNotes %}
+    <div class="content-aside">
+      <div class="role-note">
+        <span class="section-label">My role</span>
+        {% for para in roleNotes %}
+        <p>{{ para }}</p>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+  </div>
+
+  {# Video embed #}
+  {% if video %}
+  <div class="video-section">
+    <span class="section-label">Video</span>
+    <div class="video-wrap">
+      {#
+        YouTube: https://www.youtube.com/embed/VIDEO_ID?rel=0&modestbranding=1
+        Vimeo:   https://player.vimeo.com/video/VIDEO_ID?title=0&byline=0&portrait=0
+      #}
+      <iframe
+        src="{{ video }}"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        allowfullscreen
+        title="{{ title }}">
+      </iframe>
+    </div>
+  </div>
+  {% endif %}
+
+  {# Gallery #}
+  {% if gallery %}
+  <div class="gallery-section">
+    <span class="section-label">Images</span>
+    <div class="gallery-grid" id="gallery">
+      {% for item in gallery %}
+      <div class="gallery-item" data-src="{{ item.src }}" data-label="{{ item.alt }}">
+        <img src="{{ item.src }}" alt="{{ item.alt }}" loading="lazy">
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  {# Awards #}
+  {% if awards %}
+  <div class="awards-section">
+    <div class="awards-header">
+      <h2 class="awards-title">Recognition</h2>
+      <span class="awards-count">{{ awards | length }} awards</span>
+    </div>
+    <div class="awards-grid">
+      {% for award in awards %}
+      <div class="award-item {% if loop.last or loop.revindex == 1 %}last-row{% endif %}">
+        <span class="award-bullet">—</span>
+        <span class="award-name">{{ award.name }}</span>
+        <span class="award-year">{{ award.year }}</span>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  {# Next project #}
+  {% if nextProject %}
+  <a href="{{ nextProject.url }}" class="next-project">
+    <div>
+      <span class="next-label">Next project</span>
+      <span class="next-title">{{ nextProject.title }}</span>
+    </div>
+    <span class="next-arrow">→</span>
+  </a>
+  {% endif %}
+
+</main>
+
+{# Lightbox #}
+{% if gallery %}
+<dialog class="lightbox" id="lightbox">
+  <div class="lightbox-inner">
+    <img src="" alt="" id="lightbox-img">
+    <div class="lightbox-nav">
+      <button id="lb-prev">← Prev</button>
+      <button id="lb-next">Next →</button>
+    </div>
+  </div>
+  <button class="lightbox-close" id="lb-close">Close</button>
+</dialog>
+
+<script>
+  const items   = Array.from(document.querySelectorAll('.gallery-item[data-src]'));
+  const dialog  = document.getElementById('lightbox');
+  const lbImg   = document.getElementById('lightbox-img');
+  let   current = 0;
+
+  function openLightbox(i) {
+    current = i;
+    lbImg.src = items[i].dataset.src;
+    lbImg.alt = items[i].dataset.label || '';
+    dialog.showModal();
+    document.body.style.overflow = 'hidden';
+  }
+  function closeLightbox() {
+    dialog.close();
+    document.body.style.overflow = '';
+  }
+  function showNext() { current = (current + 1) % items.length; lbImg.src = items[current].dataset.src; }
+  function showPrev() { current = (current - 1 + items.length) % items.length; lbImg.src = items[current].dataset.src; }
+
+  items.forEach((item, i) => item.addEventListener('click', () => openLightbox(i)));
+  document.getElementById('lb-close').addEventListener('click', closeLightbox);
+  document.getElementById('lb-next').addEventListener('click', showNext);
+  document.getElementById('lb-prev').addEventListener('click', showPrev);
+  dialog.addEventListener('click', e => { if (e.target === dialog) closeLightbox(); });
+  document.addEventListener('keydown', e => {
+    if (!dialog.open) return;
+    if (e.key === 'Escape')      closeLightbox();
+    if (e.key === 'ArrowRight')  showNext();
+    if (e.key === 'ArrowLeft')   showPrev();
+  });
+</script>
+{% endif %}

@@ -1,0 +1,76 @@
+[
+  {
+    "slug": "bmw-window",
+    "title": "A Window Into The Near Future",
+    "client": "BMW North America",
+    "year": 2012,
+    "type": "Interactive Installation",
+    "thumb": "/images/projects/bmw-window/thumb.jpg",
+    "featured": true
+  },
+  {
+    "slug": "disney-starlight",
+    "title": "Disney Starlight — Peter Pan Float",
+    "client": "Disney",
+    "year": 2024,
+    "type": "LED Pixel Mapping",
+    "thumb": "/images/projects/disney-starlight/thumb.jpg",
+    "featured": true
+  },
+  {
+    "slug": "amazon-hq2",
+    "title": "Amazon HQ2 Visitor Landing",
+    "client": "Amazon",
+    "year": 2022,
+    "type": "TouchDesigner / DMX / LED",
+    "thumb": "/images/projects/amazon-hq2/thumb.jpg"
+  },
+  {
+    "slug": "saratoga-maps",
+    "title": "Saratoga Relief Maps",
+    "client": "Moey Inc.",
+    "year": 2023,
+    "type": "CNC Fabrication",
+    "thumb": "/images/projects/saratoga-maps/thumb.jpg"
+  },
+  {
+    "slug": "rip-current",
+    "title": "Rip Current",
+    "client": "Personal",
+    "year": 2021,
+    "type": "LED Sculpture",
+    "thumb": "/images/projects/rip-current/thumb.jpg"
+  },
+  {
+    "slug": "reading-emotion",
+    "title": "Reading Emotion",
+    "client": "Second Story",
+    "year": 2019,
+    "type": "Interactive Installation",
+    "thumb": "/images/projects/reading-emotion/thumb.jpg"
+  },
+  {
+    "slug": "member-voices",
+    "title": "Member Voices Experience",
+    "client": "First Tech Credit Union",
+    "year": 2018,
+    "type": "LED Programming",
+    "thumb": "/images/projects/member-voices/thumb.jpg"
+  },
+  {
+    "slug": "solar-hibernation",
+    "title": "Solar Hibernation",
+    "client": "Gentle Monster × Jason Krugman",
+    "year": 2016,
+    "type": "LED Fabrication",
+    "thumb": "/images/projects/solar-hibernation/thumb.jpg"
+  },
+  {
+    "slug": "jay-z-gold-window",
+    "title": "JAY-Z Gold Window",
+    "client": "Future Colossal",
+    "year": 2013,
+    "type": "Interactive Experience",
+    "thumb": "/images/projects/jay-z-gold-window/thumb.jpg"
+  }
+]

@@ -1,0 +1,13 @@
+{
+  "name": "mattrichard-studio",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Matt Richard portfolio site",
+  "scripts": {
+    "start": "eleventy --serve",
+    "build": "eleventy"
+  },
+  "dependencies": {
+    "@11ty/eleventy": "^3.0.0"
+  }
+}
